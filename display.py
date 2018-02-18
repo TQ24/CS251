@@ -11,6 +11,7 @@
 #
 # CS 251
 # Spring 2018
+# Tracy Quan
 
 import tkinter as tk
 import math
@@ -65,7 +66,7 @@ class DisplayApp:
         self.data = None # will hold the raw data someday.
         self.baseClick = None # used to keep track of mouse movement
 
-        self.oral_size = 5
+        self.oval_size = 5
 
     def buildMenus(self):
 
@@ -190,6 +191,18 @@ class DisplayApp:
     def handleMouseButton2(self, event):
         self.baseClick = (event.x, event.y)
         print( 'handle mouse button 2: %d %d' % (event.x, event.y))
+        # create a circular object at the mouse click location and store the object in the self.objects list
+        dx = 3
+        rgb = "#%02x%02x%02x" % (random.randint(0, 255),
+                                 random.randint(0, 255),
+                                 random.randint(0, 255) )
+        oval = self.canvas.create_oval( event.x - dx,
+                                        event.y - dx,
+                                        event.x + dx,
+                                        event.y + dx,
+                                        fill = rgb,
+                                        outline='')
+        self.objects.append( oval )
 
     def handleMouseButton3(self, event):
         self.baseClick = (event.x, event.y)
@@ -219,20 +232,24 @@ class DisplayApp:
     # a person moves their finger on the track pad.
     def handleMouseButton2Motion(self, event):
         print( 'handle button 2 motion %d %d' % (event.x, event.y) )
-        # create a circular object at the mouse click location and store the object in the self.objects list
-        dx = 3
-        rgb = "#%02x%02x%02x" % (random.randint(0, 255),
-                                 random.randint(0, 255),
-                                 random.randint(0, 255) )
-        oval = self.canvas.create_oval( event.x - dx,
-                                        event.y - dx,
-                                        event.x + dx,
-                                        event.y + dx,
-                                        fill = rgb,
-                                        outline='')
-        self.objects.append( oval )
-
-
+        #self.baseClick = (event.x, event.y)
+        delta_y = self.baseClick[1]-event.y   # delta_y<0: decrease, delta_y>0: increase
+        percentage = delta_y*1000/self.canvas.winfo_height()
+        diff = percentage*0.008
+        self.oval_size = self.oval_size + diff
+        print(self.oval_size)
+        #self.baseClick=(event.x, event.y)
+        for obj in self.objects:
+            loc = self.canvas.coords(obj)
+            fill_color = self.canvas.itemcget(obj, "fill")
+            self.canvas.create_oval(loc[0]-diff,
+                                    loc[1]-diff,
+                                    loc[2]+diff,
+                                    loc[3]+diff,
+                                    fill = fill_color,
+                                    outline = '')
+            self.canvas.delete(obj)
+            
     def handleMouseButton3Motion(self, event):
         print( 'handle button 3 motion %d %d' % (event.x, event.y) )
 
@@ -243,7 +260,7 @@ class DisplayApp:
             return
         num_p = dialog.numPoints_accessor()
         selection = self.listbox.curselection()
-        dx = self.oral_size
+        dx = self.oval_size
         i = 0
         if selection == ():
             print("Please select Random or Gaussian")
