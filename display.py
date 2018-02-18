@@ -15,6 +15,8 @@
 import tkinter as tk
 import math
 import random
+import os
+from tkinter import messagebox
 
 # create a class to build and manage the display
 class DisplayApp:
@@ -145,6 +147,13 @@ class DisplayApp:
         button.pack(side=tk.TOP)  # default side is top
         button2.pack(side=tk.TOP)
 
+        listbox = tk.Listbox(rightcntlframe, height = 2, selectmode = tk.BROWSE, exportselection = 0)
+        listbox.insert(tk.END, "Random")
+        listbox.insert(tk.END, "Gaussian")
+        listbox.selection_set( 0 )
+        listbox.pack(side = tk.TOP)
+        self.listbox = listbox
+
         return
 
     def setBindings(self):
@@ -192,12 +201,15 @@ class DisplayApp:
         self.baseClick = ( event.x, event.y )
         print( 'handle button1 motion %d %d' % (diff[0], diff[1]))
 
-        loc = self.canvas.coords(obj)
-        self.canvas.coords(obj,
-                           loc[0] + diff[0],
-                           loc[1] + diff[1],
-                           loc[2] + diff[0],
-                           loc[3] + diff[1])
+        for obj in self.objects:
+            # get the current coordinates
+            loc = self.canvas.coords(obj)
+            # modify the coordinates
+            self.canvas.coords(obj,
+                               loc[0] + diff[0],
+                               loc[1] + diff[1],
+                               loc[2] + diff[0],
+                               loc[3] + diff[1])
 
 
     # This is called if the second button of a real mouse has been pressed
@@ -205,28 +217,188 @@ class DisplayApp:
     # a person moves their finger on the track pad.
     def handleMouseButton2Motion(self, event):
         print( 'handle button 2 motion %d %d' % (event.x, event.y) )
+        # create a circular object at the mouse click location and store the object in the self.objects list
+        dx = 3
+        rgb = "#%02x%02x%02x" % (random.randint(0, 255),
+                                 random.randint(0, 255),
+                                 random.randint(0, 255) )
+        oval = self.canvas.create_oval( event.x - dx,
+                                        event.y - dx,
+                                        event.x + dx,
+                                        event.y + dx,
+                                        fill = rgb,
+                                        outline='')
+        self.objects.append( oval )
+
 
     def handleMouseButton3Motion(self, event):
         print( 'handle button 3 motion %d %d' % (event.x, event.y) )
 
-    # Lab
+    # create random data points
     def createRandomDataPoints( self, event = None ):
+        dialog = MyDialog(self.root)
+        if dialog.userCancelled() == True:
+            return
+        num_p = dialog.numPoints_accessor()
+        selection = self.listbox.curselection()
         dx = 5
         i = 0
-        for i in range(0, 10):
-            x = random.randrange(0,self.canvas.winfo_width())
-            y = random.randrange(0,self.canvas.winfo_height())
-            pt = self.canvas.create_oval( x-dx, y-dx, x+dx, y+dx, fill=self.colorOption.get(), outline='' )
-            self.objects.append(pt)
-
-    def main(self):
-        print( 'Entering main loop')
-        self.root.mainloop()
+        if selection == ():
+            print("Please select Random or Gaussian")
+        if selection == (0,):
+            for i in range(0, num_p):
+                x = random.randrange(0,self.canvas.winfo_width())
+                y = random.randrange(0,self.canvas.winfo_height())
+                pt = self.canvas.create_oval( x-dx, y-dx, x+dx, y+dx, fill=self.colorOption.get(), outline='' )
+                self.objects.append(pt)
+        if selection == (1,):
+            for i in range(0, num_p):
+                x = random.gauss( self.canvas.winfo_width()/2, self.canvas.winfo_width()/6)
+                y = random.gauss( self.canvas.winfo_height()/2, self.canvas.winfo_height()/6)
+                pt = self.canvas.create_oval( x-dx, y-dx, x+dx, y+dx, fill=self.colorOption.get(), outline='' )
+                self.objects.append(pt)
 
     def clearData(self, event=None):
         for obj in self.objects:
             self.canvas.delete(obj)
         self.objects = []
+
+    def main(self):
+        print( 'Entering main loop')
+        self.root.mainloop()
+
+
+# Dialog class
+class Dialog(tk.Toplevel):
+    def __init__(self, parent, title = None):
+
+        tk.Toplevel.__init__(self, parent)
+        self.transient(parent)
+
+        if title:
+            self.title(title)
+
+        self.parent = parent
+
+        self.result = None
+
+        body = tk.Frame(self)
+        self.initial_focus = self.body(body)
+        body.pack(padx=5, pady=5)
+
+        self.buttonbox()
+
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus = self
+
+        self.protocol("WM_DELETE_WINDOW", self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,
+                                  parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+    #
+    # construction hooks
+
+    def body(self, master):
+        # create dialog body.  return widget that should have
+        # initial focus.  this method should be overridden
+
+        pass
+
+    def buttonbox(self):
+        # add standard button box. override if you don't want the
+        # standard buttons
+
+        box = tk.Frame(self)
+
+        w = tk.Button(box, text="OK", width=10, command=self.ok, default=tk.ACTIVE)
+        w.pack(side=tk.LEFT, padx=5, pady=5)
+        w = tk.Button(box, text="Cancel", width=10, command=self.cancel)
+        w.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.bind("<Return>", self.ok)
+        self.bind("<Escape>", self.cancel)
+
+        box.pack()
+
+    #
+    # standard button semantics
+    def ok(self, event=None):
+
+        if not self.validate():
+            self.initial_focus.focus_set() # put focus back
+            return
+
+        self.withdraw()
+        self.update_idletasks()
+
+        self.apply()
+
+        self.cancel()
+
+    def cancel(self, event=None):
+
+        # put focus back to the parent window
+        self.parent.focus_set()
+        self.destroy()
+    #
+    # command hooks
+
+    def validate(self):
+
+        return 1 # override
+
+    def apply(self):
+
+        pass # override
+
+class MyDialog(Dialog):
+    def __init__(self, parent):
+        Dialog.__init__(self, parent)
+        # self.cancel = False     # the field indicates if the user hit cancel
+        # self.ok = False
+
+    def body(self, master):
+        l = tk.Label(master, text = "# of Points: ").grid(row = 0)
+        self.beginValue = tk.StringVar()
+        self.beginValue.set("0 - 500")
+        self.entry = tk.Entry(master, textvariable = self.beginValue)
+        self.entry.select_range(0, tk.END)
+        self.entry.grid(row=0, column=1)
+        self.entry.focus_set()
+
+
+    def validate(self):
+        if int(self.entry.get()) >=0 and int(self.entry.get()) <= 500:
+            return True
+        else:
+            tk.messagebox.showinfo("Alert!","Please type a integer between 0 and 500")
+
+    def cancel(self, event=None):
+
+        # put focus back to the parent window
+        self.parent.focus_set()
+        self.destroy()
+        self.cancel = True
+
+    def apply(self):
+        self.numPoints = int(self.entry.get())
+        self.ok = True
+
+    def numPoints_accessor(self):
+        return self.numPoints
+
+    def userCancelled(self):
+        if self.ok == True:
+            return False
+        return True
+
 
 if __name__ == "__main__":
     dapp = DisplayApp(1200, 675)
