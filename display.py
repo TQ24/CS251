@@ -34,7 +34,7 @@ class DisplayApp:
         self.root.geometry( "%dx%d+50+30" % (self.initDx, self.initDy) )
 
         # set the title of the window
-        self.root.title("First Project Demo :D")
+        self.root.title("Data Visualization")
 
         # set the maximum size of the window for resizing
         self.root.maxsize( 1600, 900 )
@@ -64,6 +64,8 @@ class DisplayApp:
         self.objects = [] # list of data objects that will be drawn in the canvas
         self.data = None # will hold the raw data someday.
         self.baseClick = None # used to keep track of mouse movement
+
+        self.oral_size = 5
 
     def buildMenus(self):
 
@@ -241,7 +243,7 @@ class DisplayApp:
             return
         num_p = dialog.numPoints_accessor()
         selection = self.listbox.curselection()
-        dx = 5
+        dx = self.oral_size
         i = 0
         if selection == ():
             print("Please select Random or Gaussian")
@@ -365,7 +367,7 @@ class MyDialog(Dialog):
         # self.ok = False
 
     def body(self, master):
-        l = tk.Label(master, text = "# of Points: ").grid(row = 0)
+        l = tk.Label(master, text = "Number of Points: ").grid(row = 0)
         self.beginValue = tk.StringVar()
         self.beginValue.set("0 - 500")
         self.entry = tk.Entry(master, textvariable = self.beginValue)
@@ -373,12 +375,22 @@ class MyDialog(Dialog):
         self.entry.grid(row=0, column=1)
         self.entry.focus_set()
 
+    def is_int(self, s):
+        try:
+            int(s)
+            return True
+        except ValueError:
+            pass
+        return False
 
     def validate(self):
-        if int(self.entry.get()) >=0 and int(self.entry.get()) <= 500:
-            return True
+        if self.is_int(self.entry.get())==False:
+            tk.messagebox.showinfo("Alert!","Please type an integer between 0 and 500")
         else:
-            tk.messagebox.showinfo("Alert!","Please type a integer between 0 and 500")
+            if int(self.entry.get()) >=0 and int(self.entry.get()) <= 500:
+                return True
+            else:
+                tk.messagebox.showinfo("Alert!","Please type an integer between 0 and 500")
 
     def cancel(self, event=None):
 
