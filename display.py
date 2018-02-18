@@ -242,13 +242,9 @@ class DisplayApp:
         for obj in self.objects:
             loc = self.canvas.coords(obj)
             fill_color = self.canvas.itemcget(obj, "fill")
-            self.canvas.create_oval(loc[0]-diff,
-                                    loc[1]-diff,
-                                    loc[2]+diff,
-                                    loc[3]+diff,
-                                    fill = fill_color,
-                                    outline = '')
-            
+            #coords = (loc[0]-diff,loc[1]-diff,loc[2]+diff,loc[3]+diff)
+            self.canvas.coords(obj, loc[0]-diff,loc[1]-diff,loc[2]+diff,loc[3]+diff)
+
 
     def handleMouseButton3Motion(self, event):
         print( 'handle button 3 motion %d %d' % (event.x, event.y) )
