@@ -248,8 +248,8 @@ class DisplayApp:
                                     loc[3]+diff,
                                     fill = fill_color,
                                     outline = '')
-            self.canvas.delete(obj)
             
+
     def handleMouseButton3Motion(self, event):
         print( 'handle button 3 motion %d %d' % (event.x, event.y) )
 
