@@ -124,6 +124,12 @@ class DisplayApp:
         rightcntlframe = tk.Frame(self.root)
         rightcntlframe.pack(side=tk.RIGHT, padx=2, pady=2, fill=tk.Y)
 
+        ### Extension ###
+        bottomframe = tk.Frame(self.root)
+        bottomframe.pack(side = tk.BOTTOM, )
+
+
+
         # make a separator frame
         sep = tk.Frame( self.root, height=self.initDy, width=2, bd=1, relief=tk.SUNKEN )
         sep.pack( side=tk.RIGHT, padx = 2, pady = 2, fill=tk.Y)
