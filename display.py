@@ -66,7 +66,7 @@ class DisplayApp:
         self.data = None # will hold the raw data someday.
         self.baseClick = None # used to keep track of mouse movement
 
-        self.oval_size = 5
+        self.oval_size = 3
 
     def buildMenus(self):
 
@@ -157,6 +157,15 @@ class DisplayApp:
         listbox.pack(side = tk.TOP)
         self.listbox = listbox
 
+        # extension2: Add a list box with different shapes that
+                    # lets you control the shape drawn for each data point.
+        listbox_shape = tk.Listbox(rightcntlframe, height = 2, selectmode = tk.BROWSE, exportselection = 0)
+        listbox_shape.insert(tk.END, "Oval")
+        listbox_shape.insert(tk.END, "Square")
+        listbox_shape.selection_set( 0 )
+        listbox_shape.pack(side = tk.BOTTOM)
+        self.listbox_shape = listbox_shape
+
         return
 
     def setBindings(self):
@@ -232,19 +241,17 @@ class DisplayApp:
     # a person moves their finger on the track pad.
     def handleMouseButton2Motion(self, event):
         print( 'handle button 2 motion %d %d' % (event.x, event.y) )
-        #self.baseClick = (event.x, event.y)
+        # extension: adjust the size of oval as the mouse move (control+right click)
         delta_y = self.baseClick[1]-event.y   # delta_y<0: decrease, delta_y>0: increase
         percentage = delta_y*1000/self.canvas.winfo_height()
-        diff = percentage*0.008
+        diff = percentage*0.05
         self.oval_size = self.oval_size + diff
         print(self.oval_size)
-        #self.baseClick=(event.x, event.y)
         for obj in self.objects:
             loc = self.canvas.coords(obj)
             fill_color = self.canvas.itemcget(obj, "fill")
-            #coords = (loc[0]-diff,loc[1]-diff,loc[2]+diff,loc[3]+diff)
             self.canvas.coords(obj, loc[0]-diff,loc[1]-diff,loc[2]+diff,loc[3]+diff)
-
+        self.baseClick = (event.x, event.y)
 
     def handleMouseButton3Motion(self, event):
         print( 'handle button 3 motion %d %d' % (event.x, event.y) )
@@ -256,22 +263,45 @@ class DisplayApp:
             return
         num_p = dialog.numPoints_accessor()
         selection = self.listbox.curselection()
+        shape_selection = self.listbox_shape.curselection()
         dx = self.oval_size
         i = 0
-        if selection == ():
-            print("Please select Random or Gaussian")
-        if selection == (0,):
-            for i in range(0, num_p):
-                x = random.randrange(0,self.canvas.winfo_width())
-                y = random.randrange(0,self.canvas.winfo_height())
-                pt = self.canvas.create_oval( x-dx, y-dx, x+dx, y+dx, fill=self.colorOption.get(), outline='' )
-                self.objects.append(pt)
-        if selection == (1,):
-            for i in range(0, num_p):
-                x = random.gauss( self.canvas.winfo_width()/2, self.canvas.winfo_width()/6)
-                y = random.gauss( self.canvas.winfo_height()/2, self.canvas.winfo_height()/6)
-                pt = self.canvas.create_oval( x-dx, y-dx, x+dx, y+dx, fill=self.colorOption.get(), outline='' )
-                self.objects.append(pt)
+        if shape_selection == ():
+            tk.messagebox.showinfo("Alert!","Please select the shape of data points")
+        # oval
+        if shape_selection == (0,):
+            if selection == ():
+                tk.messagebox.showinfo("Alert!","Please select Random or Gaussian")
+            # Random
+            if selection == (0,):
+                for i in range(0, num_p):
+                    x = random.randrange(0,self.canvas.winfo_width())
+                    y = random.randrange(0,self.canvas.winfo_height())
+                    pt = self.canvas.create_oval( x-dx, y-dx, x+dx, y+dx, fill=self.colorOption.get(), outline='' )
+                    self.objects.append(pt)
+            # Gaussian
+            if selection == (1,):
+                for i in range(0, num_p):
+                    x = random.gauss( self.canvas.winfo_width()/2, self.canvas.winfo_width()/6)
+                    y = random.gauss( self.canvas.winfo_height()/2, self.canvas.winfo_height()/6)
+                    pt = self.canvas.create_oval( x-dx, y-dx, x+dx, y+dx, fill=self.colorOption.get(), outline='' )
+                    self.objects.append(pt)
+        # Square
+        if shape_selection == (1,):
+            if selection == ():
+                tk.messagebox.showinfo("Alert!","Please select Random or Gaussian")
+            if selection == (0,):
+                for i in range(0, num_p):
+                    x = random.randrange(0,self.canvas.winfo_width())
+                    y = random.randrange(0,self.canvas.winfo_height())
+                    pt = self.canvas.create_rectangle( x-dx, y-dx, x+dx, y+dx, fill=self.colorOption.get(), outline='' )
+                    self.objects.append(pt)
+            if selection == (1,):
+                for i in range(0, num_p):
+                    x = random.gauss( self.canvas.winfo_width()/2, self.canvas.winfo_width()/6)
+                    y = random.gauss( self.canvas.winfo_height()/2, self.canvas.winfo_height()/6)
+                    pt = self.canvas.create_rectangle( x-dx, y-dx, x+dx, y+dx, fill=self.colorOption.get(), outline='' )
+                    self.objects.append(pt)
 
     def clearData(self, event=None):
         for obj in self.objects:
