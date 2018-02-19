@@ -183,6 +183,9 @@ class DisplayApp:
         self.canvas.bind( '<Control-B1-Motion>', self.handleMouseButton2Motion )
         self.canvas.bind( '<Shift-B1-Motion>', self.handleMouseButton3Motion )
 
+        # extension
+        self.canvas.bind( '<Motion>', self.handleMouseMotion )
+
         # bind command sequences to the root window
         self.root.bind( '<Control-q>', self.handleQuit )
         self.root.bind( '<Control-n>', self.clearData  )
@@ -222,6 +225,10 @@ class DisplayApp:
     def handleMouseButton3(self, event):
         self.baseClick = (event.x, event.y)
         print( 'handle mouse button 3: %d %d' % (event.x, event.y))
+
+    def handleMouseMotion(self, event):
+
+    
 
     # This is called if the first mouse button is being moved
     def handleMouseButton1Motion(self, event):
