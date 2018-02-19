@@ -228,7 +228,7 @@ class DisplayApp:
 
     def handleMouseMotion(self, event):
 
-    
+
 
     # This is called if the first mouse button is being moved
     def handleMouseButton1Motion(self, event):
