@@ -67,6 +67,7 @@ class DisplayApp:
         self.baseClick = None # used to keep track of mouse movement
 
         self.oval_size = 3
+        self.coordinates = (0,0)
 
     def buildMenus(self):
 
@@ -124,12 +125,6 @@ class DisplayApp:
         rightcntlframe = tk.Frame(self.root)
         rightcntlframe.pack(side=tk.RIGHT, padx=2, pady=2, fill=tk.Y)
 
-        ### Extension ###
-        bottomframe = tk.Frame(self.root)
-        bottomframe.pack(side = tk.BOTTOM)
-
-
-
         # make a separator frame
         sep = tk.Frame( self.root, height=self.initDy, width=2, bd=1, relief=tk.SUNKEN )
         sep.pack( side=tk.RIGHT, padx = 2, pady = 2, fill=tk.Y)
@@ -163,8 +158,8 @@ class DisplayApp:
         listbox.pack(side = tk.TOP)
         self.listbox = listbox
 
-        # extension2: Add a list box with different shapes that
-                    # lets you control the shape drawn for each data point.
+        ### Extension2 ###
+        # Add a list box with different shapes that lets you control the shape drawn for each data point.
         listbox_shape = tk.Listbox(rightcntlframe, height = 2, selectmode = tk.BROWSE, exportselection = 0)
         listbox_shape.insert(tk.END, "Oval")
         listbox_shape.insert(tk.END, "Square")
@@ -182,9 +177,11 @@ class DisplayApp:
         self.canvas.bind( '<B1-Motion>', self.handleMouseButton1Motion )
         self.canvas.bind( '<Control-B1-Motion>', self.handleMouseButton2Motion )
         self.canvas.bind( '<Shift-B1-Motion>', self.handleMouseButton3Motion )
+        ### Extension3 ###
+        self.canvas.bind( '<Motion>', self.handleMouseMotion )
+        ### Extension4 ###
+        self.canvas.bind( '<Shift-Control-Button-1>', self.handleMouseButton4_delete)
 
-        # extension
-        #self.canvas.bind( '<Motion>', self.handleMouseMotion )
 
         # bind command sequences to the root window
         self.root.bind( '<Control-q>', self.handleQuit )
@@ -226,7 +223,31 @@ class DisplayApp:
         self.baseClick = (event.x, event.y)
         print( 'handle mouse button 3: %d %d' % (event.x, event.y))
 
-    #def handleMouseMotion(self, event):
+    ### Extension4 ###
+    # Make it so clicking Shift-Cntl-mouse-button-1 will delete the point underneath it.
+    def handleMouseButton4_delete(self, event):
+        self.baseClick = (event.x, event.y)
+        min = 180
+        if self.objects!=[]:
+            remove = self.objects[0]
+        for obj in self.objects:
+            coord = self.canvas.coords(obj)
+            dis_sq = (coord[0]-self.baseClick[0])**2 + (coord[1]-self.baseClick[1])**2 + (coord[2]-self.baseClick[0])**2 + (coord[3]-self.baseClick[1])**2
+            if dis_sq < min:
+                min = dis_sq
+                remove = obj
+        if min<150:
+            if self.objects!=[]:
+                self.canvas.delete(remove)
+                self.objects.remove(remove)
+
+
+    ### Extension3 ###
+    # Get the mouse-over to report the position of the data point underneath it.
+    def handleMouseMotion(self, event):
+        self.coordinates = (event.x, event.y)
+        s = "Status: " + str(self.coordinates[0])+ ", "+str(self.coordinates[1])
+        status = tk.Label(self.root, text = s).grid(row=0, padx =self.initDx/3, pady = self.initDy-30)
 
 
 
@@ -254,7 +275,8 @@ class DisplayApp:
     # a person moves their finger on the track pad.
     def handleMouseButton2Motion(self, event):
         print( 'handle button 2 motion %d %d' % (event.x, event.y) )
-        # extension: adjust the size of oval as the mouse move (control+right click)
+        ### Extension1 ###
+        # adjust the size of oval as the mouse move (control+right click)
         delta_y = self.baseClick[1]-event.y   # delta_y<0: decrease, delta_y>0: increase
         percentage = delta_y*1000/self.canvas.winfo_height()
         diff = percentage*0.05
