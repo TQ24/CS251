@@ -1,14 +1,5 @@
-# Skeleton Tk interface example
-# Written by Bruce Maxwell
-# Modified by Stephanie Taylor
-# Updated for python 3
-#
-# Used macports to install
-#  python36
-#  py36-numpy
-#  py36-readline
-#  py36-tkinter
-#
+
+################
 # CS 251
 # Spring 2018
 # Tracy Quan
@@ -68,6 +59,8 @@ class DisplayApp:
 
         self.oval_size = 3
         self.coordinates = (0,0)
+
+        self.num_p = 0
 
     def buildMenus(self):
 
@@ -145,7 +138,7 @@ class DisplayApp:
         button = tk.Button( rightcntlframe, text="Update Color",
                                command=self.handleButton1 )
 
-        button2 = tk.Button( rightcntlframe, text="CreateRandomDataPoints",
+        button2 = tk.Button( rightcntlframe, text="Create Data Points",
                                command=self.createRandomDataPoints)
 
         button.pack(side=tk.TOP)  # default side is top
@@ -227,7 +220,8 @@ class DisplayApp:
     # Make it so clicking Shift-Cntl-mouse-button-1 will delete the point underneath it.
     def handleMouseButton4_delete(self, event):
         self.baseClick = (event.x, event.y)
-        min = 180
+        min = 60*self.oval_size
+        static = min
         if self.objects!=[]:
             remove = self.objects[0]
         for obj in self.objects:
@@ -236,7 +230,7 @@ class DisplayApp:
             if dis_sq < min:
                 min = dis_sq
                 remove = obj
-        if min<150:
+        if min<static:
             if self.objects!=[]:
                 self.canvas.delete(remove)
                 self.objects.remove(remove)
@@ -293,10 +287,10 @@ class DisplayApp:
 
     # create random data points
     def createRandomDataPoints( self, event = None ):
-        dialog = MyDialog(self.root)
+        dialog = MyDialog(self.root, self.num_p)
         if dialog.userCancelled() == True:
             return
-        num_p = dialog.numPoints_accessor()
+        self.num_p = dialog.numPoints_accessor()
         selection = self.listbox.curselection()
         shape_selection = self.listbox_shape.curselection()
         dx = self.oval_size
@@ -309,14 +303,14 @@ class DisplayApp:
                 tk.messagebox.showinfo("Alert!","Please select Random or Gaussian")
             # Random
             if selection == (0,):
-                for i in range(0, num_p):
+                for i in range(0, self.num_p):
                     x = random.randrange(0,self.canvas.winfo_width())
                     y = random.randrange(0,self.canvas.winfo_height())
                     pt = self.canvas.create_oval( x-dx, y-dx, x+dx, y+dx, fill=self.colorOption.get(), outline='' )
                     self.objects.append(pt)
             # Gaussian
             if selection == (1,):
-                for i in range(0, num_p):
+                for i in range(0, self.num_p):
                     x = random.gauss( self.canvas.winfo_width()/2, self.canvas.winfo_width()/6)
                     y = random.gauss( self.canvas.winfo_height()/2, self.canvas.winfo_height()/6)
                     pt = self.canvas.create_oval( x-dx, y-dx, x+dx, y+dx, fill=self.colorOption.get(), outline='' )
@@ -326,13 +320,13 @@ class DisplayApp:
             if selection == ():
                 tk.messagebox.showinfo("Alert!","Please select Random or Gaussian")
             if selection == (0,):
-                for i in range(0, num_p):
+                for i in range(0, self.num_p):
                     x = random.randrange(0,self.canvas.winfo_width())
                     y = random.randrange(0,self.canvas.winfo_height())
                     pt = self.canvas.create_rectangle( x-dx, y-dx, x+dx, y+dx, fill=self.colorOption.get(), outline='' )
                     self.objects.append(pt)
             if selection == (1,):
-                for i in range(0, num_p):
+                for i in range(0, self.num_p):
                     x = random.gauss( self.canvas.winfo_width()/2, self.canvas.winfo_width()/6)
                     y = random.gauss( self.canvas.winfo_height()/2, self.canvas.winfo_height()/6)
                     pt = self.canvas.create_rectangle( x-dx, y-dx, x+dx, y+dx, fill=self.colorOption.get(), outline='' )
@@ -350,7 +344,7 @@ class DisplayApp:
 
 # Dialog class
 class Dialog(tk.Toplevel):
-    def __init__(self, parent, title = None):
+    def __init__(self, parent, num=0, title = None):
 
         tk.Toplevel.__init__(self, parent)
         self.transient(parent)
@@ -363,7 +357,7 @@ class Dialog(tk.Toplevel):
         self.result = None
 
         body = tk.Frame(self)
-        self.initial_focus = self.body(body)
+        self.initial_focus = self.body(body, num)
         body.pack(padx=5, pady=5)
 
         self.buttonbox()
@@ -381,6 +375,7 @@ class Dialog(tk.Toplevel):
         self.initial_focus.focus_set()
 
         self.wait_window(self)
+
 
     #
     # construction hooks
@@ -439,19 +434,26 @@ class Dialog(tk.Toplevel):
         pass # override
 
 class MyDialog(Dialog):
-    def __init__(self, parent):
-        Dialog.__init__(self, parent)
+    def __init__(self, parent, num):
+        Dialog.__init__(self, parent, num)
         # self.cancel = False     # the field indicates if the user hit cancel
         # self.ok = False
 
-    def body(self, master):
+
+    def body(self, master, num):
         l = tk.Label(master, text = "Number of Points: ").grid(row = 0)
         self.beginValue = tk.StringVar()
-        self.beginValue.set("0 - 500")
+        if num == 0:
+            self.beginValue.set("0-500")
+        else:
+            ### Extension5###
+            self.beginValue.set(num)
         self.entry = tk.Entry(master, textvariable = self.beginValue)
         self.entry.select_range(0, tk.END)
         self.entry.grid(row=0, column=1)
         self.entry.focus_set()
+
+
 
     def is_int(self, s):
         try:
